@@ -19,17 +19,22 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
-  children,
-}: Readonly<{
+                                     children,
+                                   }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="keywords" content="refactor, codebase, best-practices" />
+        <meta name="author" content="Philipp Sowik" />
+        <script defer data-domain="refactor-pro.vercel.app" src="https://plausible.io/js/script.js"></script>
+        <title></title>
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {children}
       </body>
-    </html>
+      </html>
   );
 }
