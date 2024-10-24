@@ -33,11 +33,6 @@ export function LandingPageComponent() {
                 <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
                   Transform your codebase with automated refactoring, architecture optimization, and best practices implementation.
                 </p>
-                <Link href="#try-now">
-                  <Button className="mt-4" size="lg">
-                    Try Now
-                  </Button>
-                </Link>
               </div>
             </div>
           </section>
