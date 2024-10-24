@@ -29,7 +29,6 @@ export function Page() {
       await handleFiles(e.target.files)
     }
   }
-
   const handleFiles = async (items: FileList | DataTransferItemList) => {
     const fileStructure: { [key: string]: string } = {}
 
@@ -61,12 +60,12 @@ export function Page() {
     }
 
     for (const item of items) {
-      if (item.kind === 'file') {
+      if ("kind" in item && item.kind === 'file') {
         const file = item.getAsFile()
         if (file) {
           await readFile(file, file.name)
         }
-      } else if (item.webkitGetAsEntry) {
+      } else if ("webkitGetAsEntry" in item) {
         const entry = item.webkitGetAsEntry()
         if (entry) {
           await traverseFileTree(entry)
@@ -80,6 +79,7 @@ export function Page() {
     // Navigate to the preview page
     router.push('/preview')
   }
+
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -101,7 +101,6 @@ export function Page() {
           id="file-upload"
           className="hidden"
           multiple
-          webkitdirectory="true"
           onChange={handleFileSelect}
         />
         <Button className="mt-4" onClick={() => document.getElementById('file-upload')?.click()}>
