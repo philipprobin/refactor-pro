@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { UploadIcon, User } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import {useState} from 'react'
+import {useRouter} from 'next/navigation'
+import {UploadIcon, User} from 'lucide-react'
+import {Button} from '@/components/ui/button'
 
 export default function Home() {
     const [isDragging, setIsDragging] = useState(false)
@@ -61,12 +61,12 @@ export default function Home() {
         }
 
         for (const item of items) {
-            if (item.kind === 'file') {
+            if ("kind" in item && item.kind === 'file') {
                 const file = item.getAsFile()
                 if (file) {
                     await readFile(file, file.name)
                 }
-            } else if (item.webkitGetAsEntry) {
+            } else if ("webkitGetAsEntry" in item) {
                 const entry = item.webkitGetAsEntry()
                 if (entry) {
                     await traverseFileTree(entry)
@@ -110,7 +110,6 @@ export default function Home() {
                         id="file-upload"
                         className="hidden"
                         multiple
-                        webkitdirectory="true"
                         onChange={handleFileSelect}
                     />
                     <Button className="mt-4" onClick={() => document.getElementById('file-upload')?.click()}>
