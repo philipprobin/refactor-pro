@@ -53,14 +53,14 @@ export function Page() {
       } else if (item.isDirectory) {
         const dirReader = (item as FileSystemDirectoryEntry).createReader()
         dirReader.readEntries(async (entries) => {
-          for (let entry of entries) {
+          for (const entry of entries) {
             await traverseFileTree(entry, `${path}${item.name}/`)
           }
         })
       }
     }
 
-    for (let item of items) {
+    for (const item of items) {
       if (item.kind === 'file') {
         const file = item.getAsFile()
         if (file) {
