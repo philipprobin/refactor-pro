@@ -1,101 +1,123 @@
-import Image from "next/image";
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { UploadIcon, User } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    const [isDragging, setIsDragging] = useState(false)
+    const router = useRouter()
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        setIsDragging(true)
+    }
+
+    const handleDragLeave = () => {
+        setIsDragging(false)
+    }
+
+    const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        setIsDragging(false)
+        await handleFiles(e.dataTransfer.items)
+    }
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            await handleFiles(e.target.files)
+        }
+    }
+
+    const handleFiles = async (items: FileList | DataTransferItemList) => {
+        const fileStructure: { [key: string]: string } = {}
+
+        const readFile = (file: File, path: string) => {
+            return new Promise<void>((resolve) => {
+                const reader = new FileReader()
+                reader.onload = (e) => {
+                    fileStructure[path] = e.target?.result as string
+                    resolve()
+                }
+                reader.readAsText(file)
+            })
+        }
+
+        const traverseFileTree = async (item: FileSystemEntry, path: string = '') => {
+            if (item.isFile) {
+                const file = item as FileSystemFileEntry
+                file.file(async (file) => {
+                    await readFile(file, `${path}${file.name}`)
+                })
+            } else if (item.isDirectory) {
+                const dirReader = (item as FileSystemDirectoryEntry).createReader()
+                dirReader.readEntries(async (entries) => {
+                    for (const entry of entries) {
+                        await traverseFileTree(entry, `${path}${item.name}/`)
+                    }
+                })
+            }
+        }
+
+        for (const item of items) {
+            if (item.kind === 'file') {
+                const file = item.getAsFile()
+                if (file) {
+                    await readFile(file, file.name)
+                }
+            } else if (item.webkitGetAsEntry) {
+                const entry = item.webkitGetAsEntry()
+                if (entry) {
+                    await traverseFileTree(entry)
+                }
+            }
+        }
+
+        // Store the file structure in localStorage (you might want to use a more robust solution for larger projects)
+        localStorage.setItem('fileStructure', JSON.stringify(fileStructure))
+
+        // Navigate to the preview page
+        router.push('/preview')
+    }
+
+    return (
+        <div className="container mx-auto p-8 min-h-screen">
+            {/* Header with title and User button */}
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-2xl font-bold">RefactorPro Upload</h1>
+                <button className="text-black">
+                    <User className="h-8 w-8"/>
+                </button>
+            </div>
+
+            {/* Centered Drag and Drop Area */}
+            <div className="flex flex-col justify-center items-center min-h-[50vh]">
+                <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`border-2 border-dashed rounded-lg p-24 text-center ${
+                        isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+                    }`}
+                >
+                    <UploadIcon className="mx-auto h-12 w-12 text-gray-400"/>
+                    <p className="mt-2 text-sm text-gray-600">
+                        Drag and drop your project files and folders here, or click to select
+                    </p>
+                    <input
+                        type="file"
+                        id="file-upload"
+                        className="hidden"
+                        multiple
+                        webkitdirectory="true"
+                        onChange={handleFileSelect}
+                    />
+                    <Button className="mt-4" onClick={() => document.getElementById('file-upload')?.click()}>
+                        Select Files and Folders
+                    </Button>
+                </div>
+            </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    )
 }
